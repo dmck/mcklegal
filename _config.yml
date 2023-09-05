@@ -1,6 +1,7 @@
 title: Daniel McKnight
 description:  Workers' Compensation Attorney
 show_downloads: false
-is_project_page: false
 google_analytics:
 theme: jekyll-theme-cayman
+github:
+  is_project_page: false
