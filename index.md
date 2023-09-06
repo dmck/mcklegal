@@ -12,7 +12,7 @@ layout: default
 # Fees & Costs
 Clients are responsible for both fees and costs. The costs owed are the actual costs incurred. 
 | Service Type | Standard Rate |
-|--------------|---------------|
+|:-------------|:--------------|
 | Hourly Rate  | $465/hr       |
 | Contingency  | Case-by-Case  |
 
