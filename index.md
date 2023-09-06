@@ -11,10 +11,11 @@ layout: default
 
 # Fees & Costs
 Clients are responsible for both fees and costs. The costs owed are the actual costs incurred. 
-| Service Type | Standard Rate |
-|:-------------|:--------------|
-| Hourly Rate  | $465/hr       |
-| Contingency  | Case-by-Case  |
+
+| Service Type | Standard Rate  |
+|:-------------|:--------------:|
+| Hourly Rate  | $465/hr        |
+| Contingency  | Case-by-Case   |
 
 # Qualifications and Experience
 Daniel McKnight graduated from the University of Alabama, School of Law, in 2013. He was admitted to the Florida Bar in 2015. He practiced workers' compensation law with McKnight & McKnight through 2022, including related matters such as appeals, ruli nisi, retaliatory discharge, and punitive damages claims.
