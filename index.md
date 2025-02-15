@@ -1,6 +1,7 @@
 ---
 layout: default
 ---
+#test
 
 # Services
 - **Independent Counsel** - Once an employee has agreed to a Workers' Compensation Settlement Agreement, the JCC's focus turns to the reasonableness of their attorney's fees. In high-value settlements, employees may benefit from independent counsel to evaluate and negotiate prior counsel's claims for fees and costs. The Fee Approval inquiry may also raise questions about the prior attorney-client relationship including: the time spent by the lawyer, the limitations imposed by the client, and the difficulty of the claim. Employees who would prefer to keep these matters confidential may wish to consult with independent counsel prior to the disclosure of this information.
