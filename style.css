@@ -1,0 +1,147 @@
+:root {
+  --paper: #f3efe6;
+  --ink: #1c1915;
+  --muted: #5c564c;
+  --line: #d6cfc0;
+  --accent: #215c4a;
+  --accent-hover: #163e32;
+  --focus: #215c4a;
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+  --font-sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  color-scheme: light;
+}
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+a {
+  color: var(--accent);
+  text-underline-offset: 0.18em;
+}
+
+a:hover { color: var(--accent-hover); }
+
+a:focus-visible,
+.skip:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.skip {
+  position: absolute;
+  left: 0.75rem;
+  top: -3rem;
+  background: var(--paper);
+  padding: 0.4rem 0.7rem;
+  z-index: 2;
+}
+
+.skip:focus {
+  top: 0.75rem;
+}
+
+.shell {
+  max-width: 38rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 3.5rem;
+}
+
+.top {
+  margin-bottom: 2.75rem;
+}
+
+.mark {
+  margin: 0;
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+h1 {
+  font-family: var(--font-serif);
+  font-size: clamp(2.15rem, 6vw, 3.15rem);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin: 0 0 1rem;
+}
+
+.lede {
+  margin: 0 0 2.75rem;
+  font-size: 1.15rem;
+  line-height: 1.5;
+  max-width: 34rem;
+}
+
+h2 {
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  font-weight: 400;
+  margin: 0 0 0.9rem;
+}
+
+.things {
+  list-style: none;
+  margin: 0 0 2.75rem;
+  padding: 0;
+  border-top: 1px solid var(--line);
+}
+
+.things li {
+  margin: 0;
+  padding: 1.15rem 0 1.25rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.things h3 {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 400;
+  margin: 0 0 0.35rem;
+}
+
+.things h3 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.things h3 a:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+.things p {
+  margin: 0;
+  color: var(--muted);
+}
+
+#main:focus {
+  outline: none;
+}
+
+@media (min-width: 640px) {
+  .shell {
+    padding: 2.25rem 1.5rem 4.5rem;
+  }
+}
+
+@media print {
+  body { background: #fff; }
+  a { color: inherit; }
+  .skip { display: none; }
+}
