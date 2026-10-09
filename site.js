@@ -1,4 +1,5 @@
-/* Optional preview clock: ?t=180 starts at 180s, ?speed=10 runs faster, ?speed=0 holds. */
+/* Preview clock: ?t= seconds, ?speed= rate, ?speed=0 holds.
+   Film acts (seconds): 320 grain, 346.7 struggle, 386.7 escalation, 413.3 flood, 440 resolve, 480 hold. */
 (function () {
   "use strict";
 
@@ -20,6 +21,65 @@
   var BPM = 72;
   var MUSIC = 252;
   var QUIET_AT = 50;
+  var BAR = 10 / 3;
+  var ACT1 = 320;
+  var ACT2 = 320 + 8 * BAR;
+  var ACT3 = 320 + 20 * BAR;
+  var ACT4 = 320 + 28 * BAR;
+  var ACT5 = 320 + 36 * BAR;
+  var HOLD = 320 + 48 * BAR;
+
+  function film(t) {
+    var o = { act: 0, grains: 0, side: 0, shed: 0, cap: 900, jitter: 0.08, damp: 1.7, stiff: 6.2 };
+    if (t < ACT1) return o;
+    if (t < ACT2) {
+      o.act = 1;
+      o.side = 1;
+      o.cap = 4;
+      o.damp = 2.6;
+      o.stiff = 4;
+      return o;
+    }
+    if (t < ACT3) {
+      o.act = 2;
+      o.grains = 6;
+      o.side = (Math.floor((t - ACT2) / (4 * BAR)) % 2 === 0) ? 1 : -1;
+      o.shed = 0.006;
+      o.cap = 170;
+      o.jitter = 0.08;
+      return o;
+    }
+    if (t < ACT4) {
+      o.act = 3;
+      o.grains = 14;
+      o.side = (Math.floor((t - ACT3) / (2 * BAR)) % 2 === 0) ? -1 : 1;
+      o.shed = 0.012;
+      o.cap = 220;
+      o.jitter = 0.22;
+      o.stiff = 7.2;
+      return o;
+    }
+    if (t < ACT5) {
+      o.act = 4;
+      o.grains = 26;
+      o.side = (Math.floor((t - ACT4) / (2 * BAR)) % 2 === 0) ? 1 : -1;
+      o.shed = 0.02;
+      o.cap = 240;
+      o.jitter = 0.72;
+      o.stiff = 8;
+      return o;
+    }
+    var u = t >= HOLD ? 1 : (t - ACT5) / (HOLD - ACT5);
+    o.act = 5;
+    o.grains = (1 - u) * (1 - u) * 3;
+    o.side = 0;
+    o.shed = 0.005 + 0.012 * u;
+    o.cap = 120;
+    o.jitter = 0.36;
+    o.damp = 2.4 + 2.8 * u;
+    o.stiff = 3.4;
+    return o;
+  }
 
   var VERT = [
     "#version 300 es",
@@ -494,13 +554,18 @@
           "uniform float uDt;",
           "uniform float uTime;",
           "uniform float uSpawn;",
-          "uniform float uBias;",
+          "uniform float uSide;",
+          "uniform float uJitter;",
+          "uniform float uShed;",
+          "uniform float uAct;",
           "uniform float uCap;",
           LIB,
           "layout(location=0) out vec4 oPos;",
           "layout(location=1) out vec4 oVel;",
           "float hash(vec2 p) {",
-          "  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);",
+          "  vec3 q = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973));",
+          "  q += dot(q, q.yzx + 33.33);",
+          "  return fract((q.x + q.y) * q.z);",
           "}",
           "float mound(float mass, vec2 d) {",
           "  float H = min(0.26, mass * 0.00055);",
@@ -517,13 +582,23 @@
           "  float massR = stt.w;",
           "  float dt = clamp(uDt, 0.001, 0.033);",
           "  if (pos.w < 0.5) {",
+          "    if (uAct > 0.5 && uAct < 1.5) {",
+          "      if (id.x == 0 && id.y == 0) {",
+          "        oPos = vec4(0.74, 1.05, 0.10, 1.0);",
+          "        oVel = vec4(0.0, -0.02, 0.0, 0.0);",
+          "      } else {",
+          "        oPos = vec4(0.0, -4.0, 0.0, 0.0);",
+          "        oVel = vec4(0.0);",
+          "      }",
+          "      return;",
+          "    }",
           "    float n = hash(vec2(id) + vec2(uTime * 17.3, floor(uTime * 60.0)));",
           "    if (uSpawn > 0.0 && n < uSpawn) {",
-          "      float stream = sin(uTime * 0.27) * 0.8 + uBias;",
-          "      float jx = (hash(vec2(id) + 2.3) - 0.5) * 0.1;",
-          "      float jz = (hash(vec2(id) + 5.1) - 0.5) * 0.1;",
-          "      oPos = vec4(stream + jx, 1.12, jz, 1.0);",
-          "      oVel = vec4((hash(vec2(id) + 8.0) - 0.5) * 0.1, -0.06, (hash(vec2(id) + 9.0) - 0.5) * 0.1, 0.0);",
+          "      float stream = abs(uSide) < 0.5 ? (hash(vec2(id) + 19.2) - 0.5) * 1.55 : uSide * 0.74;",
+          "      float jx = (hash(vec2(id) + 2.3) - 0.5) * uJitter;",
+          "      float jz = (hash(vec2(id) + 5.1) - 0.5) * uJitter * 0.65;",
+          "      oPos = vec4(stream + jx, 0.95, 0.10 + jz, 1.0);",
+          "      oVel = vec4((hash(vec2(id) + 8.0) - 0.5) * 0.12, -0.04, (hash(vec2(id) + 9.0) - 0.5) * 0.08, 0.0);",
           "    } else {",
           "      oPos = vec4(0.0, -4.0, 0.0, 0.0);",
           "      oVel = vec4(0.0);",
@@ -556,7 +631,7 @@
           "      if (r > PR || pos.y > c.y + 0.12 || pos.y < c.y - 0.34) continue;",
           "      float top = bowl(d) + mound(mass, d);",
           "      if (pos.y <= c.y + top + 0.016 && vel.y <= 0.25) {",
-          "        bool spill = mass > uCap || r > PR * 0.9 || (mass > uCap * 0.72 && r > PR * 0.68);",
+          "        bool spill = mass > uCap || r > PR * 0.9;",
           "        if (spill) {",
           "          vec2 o = d / max(r, 0.0001);",
           "          pos.xz += o * 0.035;",
@@ -584,12 +659,22 @@
           "  float mass2 = side2 > 0.0 ? massR : massL;",
           "  float r2 = length(pos.xz);",
           "  float surface = mound(mass2, pos.xz);",
-          "  if (r2 > PR * 0.93 || pos.y > surface + 0.05) {",
+          "  float h = hash(vec2(id) + vec2(floor(uTime * 47.0), uTime * 13.1));",
+          "  float rim = smoothstep(PR * 0.22, PR * 0.9, r2);",
+          "  bool leave = r2 > PR * 0.93 || pos.y > surface + 0.05;",
+          "  bool favored = uSide * side2 > 0.2;",
+          "  if (!favored && abs(uSide) > 0.5 && h < uShed * (0.25 + rim)) leave = true;",
+          "  if (mass2 > uCap && r2 > PR * 0.48 && h < 0.012 + 0.02 * rim) leave = true;",
+          "  if (uAct > 4.5) {",
+          "    float heavy = massR > massL + 1.5 ? 1.0 : (massL > massR + 1.5 ? -1.0 : 0.0);",
+          "    if (heavy * side2 > 0.5 && h < uShed * (0.3 + rim)) leave = true;",
+          "  }",
+          "  if (leave) {",
           "    vec3 c2 = panPos(side2, ang);",
           "    vec2 o2 = pos.xz / max(r2, 0.0001);",
           "    vec3 world = vec3(c2.x + pos.x, c2.y + bowl(pos.xz) + pos.y, c2.z + pos.z);",
-          "    oPos = vec4(world + vec3(o2.x, 0.02, o2.y) * 0.03, 1.0);",
-          "    oVel = vec4(o2.x * 0.65, 0.04, o2.y * 0.65, 0.0);",
+          "    oPos = vec4(world + vec3(o2.x, 0.04, o2.y) * 0.05, 1.0);",
+          "    oVel = vec4(o2.x * 0.9, 0.14, o2.y * 0.9, 0.0);",
           "    return;",
           "  }",
           "  oPos = pos;",
@@ -629,6 +714,8 @@
           "uniform sampler2D uAng;",
           "uniform float uDt;",
           "uniform float uRows;",
+          "uniform float uDamp;",
+          "uniform float uStiff;",
           "out vec4 fragColor;",
           "void main() {",
           "  int rows = int(uRows);",
@@ -641,9 +728,9 @@
           "    R += c.y;",
           "  }",
           "  vec4 prev = texelFetch(uAng, ivec2(0, 0), 0);",
-          "  float target = clamp((R - L) * 0.0016, -0.32, 0.32);",
-          "  float omega = prev.y + ((target - prev.x) * 3.4 - prev.y * 1.45) * uDt;",
-          "  float ang = clamp(prev.x + omega * uDt, -0.36, 0.36);",
+          "  float target = clamp((R - L) * 0.0024, -0.48, 0.48);",
+          "  float omega = prev.y + ((target - prev.x) * uStiff - prev.y * uDamp) * uDt;",
+          "  float ang = clamp(prev.x + omega * uDt, -0.52, 0.52);",
           "  fragColor = vec4(ang, omega, L, R);",
           "}"
         ].join("\n")
@@ -658,6 +745,7 @@
           "uniform float uYaw;",
           "uniform vec2 uRes;",
           "uniform vec2 uGrid;",
+          "uniform float uScale;",
           LIB,
           "out vec3 vCol;",
           "void main() {",
@@ -681,7 +769,7 @@
           "  world = rotY(world, uYaw);",
           "  vec4 clip = uVP * vec4(world, 1.0);",
           "  gl_Position = clip;",
-          "  gl_PointSize = clamp(uRes.y * 0.03 / max(clip.w, 0.2), 2.2, 11.0);",
+          "  gl_PointSize = clamp(uRes.y * 0.034 * uScale / max(clip.w, 0.15), 2.0, 28.0);",
           "  float g = fract(float(id.x * 13 + id.y * 7) * 0.173);",
           "  vCol = mix(vec3(0.74, 0.58, 0.34), vec3(0.98, 0.88, 0.62), g);",
           "}"
@@ -703,7 +791,7 @@
       );
       if (simProg && rowProg && angProg && ptProg && simFbo[0] && simFbo[1] && angFbo[0] && angFbo[1] && rowFbo) {
         var simU = {};
-        ["uPos", "uVel", "uAng", "uDt", "uTime", "uSpawn", "uBias", "uCap"].forEach(function (name) {
+        ["uPos", "uVel", "uAng", "uDt", "uTime", "uSpawn", "uSide", "uJitter", "uShed", "uAct", "uCap"].forEach(function (name) {
           simU[name] = gl.getUniformLocation(simProg, name);
         });
         var rowU = {
@@ -714,10 +802,12 @@
           uRow: gl.getUniformLocation(angProg, "uRow"),
           uAng: gl.getUniformLocation(angProg, "uAng"),
           uDt: gl.getUniformLocation(angProg, "uDt"),
-          uRows: gl.getUniformLocation(angProg, "uRows")
+          uRows: gl.getUniformLocation(angProg, "uRows"),
+          uDamp: gl.getUniformLocation(angProg, "uDamp"),
+          uStiff: gl.getUniformLocation(angProg, "uStiff")
         };
         var ptU = {};
-        ["uPos", "uAng", "uVP", "uYaw", "uRes", "uGrid", "uAlpha"].forEach(function (name) {
+        ["uPos", "uAng", "uVP", "uYaw", "uRes", "uGrid", "uScale", "uAlpha"].forEach(function (name) {
           ptU[name] = gl.getUniformLocation(ptProg, name);
         });
         gl.useProgram(simProg);
@@ -752,8 +842,8 @@
         sand = {
           cur: 0,
           aCur: 0,
-          cap: coarse ? 420 : 640,
-          step: function (dt, spawn, time) {
+          step: function (dt, spawn, time, F) {
+            var state = F || film(time);
             var next = 1 - sand.cur;
             var aNext = 1 - sand.aCur;
             gl.disable(gl.BLEND);
@@ -772,8 +862,11 @@
             gl.uniform1f(simU.uDt, dt);
             gl.uniform1f(simU.uTime, time);
             gl.uniform1f(simU.uSpawn, spawn);
-            gl.uniform1f(simU.uBias, Math.sin(time * 0.06) * 0.14);
-            gl.uniform1f(simU.uCap, sand.cap);
+            gl.uniform1f(simU.uSide, state.side);
+            gl.uniform1f(simU.uJitter, state.jitter);
+            gl.uniform1f(simU.uShed, state.shed);
+            gl.uniform1f(simU.uAct, state.act);
+            gl.uniform1f(simU.uCap, state.cap);
             gl.disableVertexAttribArray(0);
             gl.disableVertexAttribArray(1);
             gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -792,6 +885,8 @@
             gl.activeTexture(gl.TEXTURE3);
             gl.bindTexture(gl.TEXTURE_2D, angTex[sand.aCur]);
             gl.uniform1f(angU.uDt, dt);
+            gl.uniform1f(angU.uDamp, state.damp);
+            gl.uniform1f(angU.uStiff, state.stiff);
             gl.drawArrays(gl.TRIANGLES, 0, 3);
             sand.aCur = aNext;
           }
@@ -860,6 +955,92 @@
       return mul4(persp(fovy, Math.max(0.2, aspect), 0.06, 40), lookAt(eye, target, [0, 1, 0]));
     }
 
+    function mix3(a, b, u) {
+      return [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, a[2] + (b[2] - a[2]) * u];
+    }
+    function ease01(u) {
+      u = u < 0 ? 0 : u > 1 ? 1 : u;
+      return u * u * (3 - 2 * u);
+    }
+    function vpOf(eye, target, fovyDeg, aspect, t) {
+      var phone = aspect < 0.92;
+      var e0 = eye[0];
+      var e1 = eye[1];
+      var e2 = eye[2];
+      var t0 = target[0];
+      var t1 = target[1];
+      var t2 = target[2];
+      if (phone) {
+        e0 = t0 + (e0 - t0) * 1.2;
+        e1 = t1 + (e1 - t1) * 1.2;
+        e2 = t2 + (e2 - t2) * 1.2;
+        fovyDeg += 6;
+      }
+      e0 += Math.sin(t * 0.17) * 0.06;
+      e1 += Math.sin(t * 0.11 + 1.3) * 0.035;
+      e2 += Math.cos(t * 0.13) * 0.045;
+      return mul4(
+        persp(fovyDeg * Math.PI / 180, Math.max(0.2, aspect), 0.05, 40),
+        lookAt([e0, e1, e2], [t0, t1, t2], [0, 1, 0])
+      );
+    }
+    function blendShots(t, t0, period, shots, aspect) {
+      var elapsed = t - t0;
+      var n = Math.floor(elapsed / period);
+      var f = elapsed - n * period;
+      var len = shots.length;
+      var next = shots[((n % len) + len) % len];
+      var eye = next.eye;
+      var at = next.at;
+      var fov = next.fov;
+      if (n > 0) {
+        var prev = shots[(((n - 1) % len) + len) % len];
+        var u = f < 0.45 ? ease01(f / 0.45) : 1;
+        eye = mix3(prev.eye, next.eye, u);
+        at = mix3(prev.at, next.at, u);
+        fov = prev.fov + (next.fov - prev.fov) * u;
+      }
+      var k = 1 - 0.045 * Math.min(1, f / period);
+      eye = mix3(at, eye, k);
+      return vpOf(eye, at, fov, aspect, t);
+    }
+    var SHOT_STRUGGLE = [
+      { eye: [1.55, 0.42, 2.55], at: [0, -0.12, 0], fov: 32 },
+      { eye: [0.08, -0.48, 2.65], at: [0, 0.04, 0], fov: 34 },
+      { eye: [-1.6, 0.32, 2.35], at: [0, -0.08, 0], fov: 32 },
+      { eye: [0.62, -0.22, 1.95], at: [0, 0.02, 0], fov: 30 }
+    ];
+    var SHOT_RISE = [
+      { eye: [1.35, -0.15, 3.25], at: [0, -0.02, 0], fov: 40 },
+      { eye: [-0.35, -0.62, 3.55], at: [0, 0.08, 0], fov: 44 },
+      { eye: [1.9, 0.18, 2.45], at: [0.05, -0.08, 0], fov: 36 },
+      { eye: [0.15, 0.72, 3.7], at: [0, -0.16, 0], fov: 38 }
+    ];
+    var SHOT_FLOOD = [
+      { eye: [0.25, -0.95, 4.15], at: [0, 0.12, 0], fov: 42 },
+      { eye: [0.85, 0.12, 1.75], at: [0, 0.04, 0], fov: 30 },
+      { eye: [-2.15, 0.28, 2.05], at: [0, -0.04, 0], fov: 36 },
+      { eye: [0.15, 2.55, 1.45], at: [0, -0.18, 0], fov: 40 }
+    ];
+    function filmCam(t, aspect) {
+      if (t < ACT1) return null;
+      if (t < ACT2) {
+        var u = ease01((t - ACT1) / (ACT2 - ACT1));
+        var drop = ease01(Math.min(1, (t - ACT1) / 8));
+        var y = 0.78 + (-0.46 - 0.78) * drop;
+        var dist = 1.9 - 0.42 * u;
+        return vpOf([1.08, y + 0.2, dist], [0.68, y, 0.08], 26, aspect, t);
+      }
+      if (t < ACT3) return blendShots(t, ACT2, 2 * BAR, SHOT_STRUGGLE, aspect);
+      if (t < ACT4) return blendShots(t, ACT3, 2 * BAR, SHOT_RISE, aspect);
+      if (t < ACT5) return blendShots(t, ACT4, 2 * BAR, SHOT_FLOOD, aspect);
+      var settle = t >= HOLD ? 1 : ease01((t - ACT5) / (HOLD - ACT5));
+      var orbit = 0.45 + (t - ACT5) * 0.05;
+      var dist2 = 2.4 + settle * 2.9;
+      var eye = [Math.sin(orbit) * dist2 * 0.62, 0.12 + settle * 1.15, Math.cos(orbit) * dist2];
+      return vpOf(eye, [0, -0.06 * (1 - settle), 0], 30 + settle * 8, aspect, t);
+    }
+
     function drawPart(obj, part, color, alpha) {
       gl.bindBuffer(gl.ARRAY_BUFFER, obj.buf);
       gl.enableVertexAttribArray(0);
@@ -872,23 +1053,41 @@
       gl.drawArrays(gl.TRIANGLES, 0, obj.n);
     }
 
+    function runFilm(n, t0, useFilm, extra) {
+      var tt = t0;
+      for (var i = 0; i < n; i++) {
+        var F = useFilm ? film(tt) : extra;
+        var prob = F.grains > 0 ? F.grains / (PW * PH) : 0;
+        sand.step(0.016, prob, tt, F);
+        tt += 0.016;
+      }
+    }
+
     return {
-      step: function (dt, spawn, time) {
-        if (sand) sand.step(dt, spawn, time);
+      step: function (dt, grains, time, F) {
+        if (!sand) return;
+        var state = F || film(time);
+        var prob = grains > 0 ? grains / (PW * PH) : 0;
+        sand.step(dt, prob, time, state);
       },
       warm: function (t) {
-        if (!sand) return;
-        var x = (t - 270) / 66;
-        if (x < 0.04) return;
-        if (x > 1) x = 1;
-        var p = x * x * (3 - 2 * x);
-        var spawn = p * p * 0.016;
-        var n = Math.min(210, Math.floor(28 + p * 180));
-        for (var i = 0; i < n; i++) sand.step(0.016, spawn, i * 0.21);
+        if (!sand || t < ACT1 + 0.02) return;
+        if (film(t).act >= 5) {
+          var primeR = { act: 4, grains: 12, side: 1, shed: 0.008, cap: 150, jitter: 0.16, damp: 2.4, stiff: 5.5 };
+          var primeL = { act: 4, grains: 12, side: -1, shed: 0.008, cap: 150, jitter: 0.16, damp: 2.4, stiff: 5.5 };
+          runFilm(90, ACT5 - 3, false, primeR);
+          runFilm(90, ACT5 - 1.5, false, primeL);
+          var tail = Math.max(2.4, t - ACT5);
+          var n5 = Math.min(420, Math.floor(tail / 0.016));
+          runFilm(n5, t - n5 * 0.016, true, null);
+          return;
+        }
+        var n = Math.min(520, Math.floor((t - ACT1) / 0.016));
+        runFilm(n, t - n * 0.016, true, null);
       },
       draw: function (time, alpha, aspect) {
-        var yaw = (time - 330) * 0.028 + 0.42;
-        var vp = camera(aspect);
+        var yaw = time < ACT1 ? (time - 330) * 0.028 + 0.42 : (time - 300) * 0.012 + 0.22;
+        var vp = filmCam(time, aspect) || camera(aspect);
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         gl.viewport(0, 0, canvas.width, canvas.height);
         gl.enable(gl.DEPTH_TEST);
@@ -919,6 +1118,7 @@
         gl.uniform1f(sand.ptU.uYaw, yaw);
         gl.uniform1f(sand.ptU.uAlpha, alpha);
         gl.uniform2f(sand.ptU.uRes, canvas.width, canvas.height);
+        gl.uniform1f(sand.ptU.uScale, time >= ACT1 && time < ACT2 ? 2.6 : 1);
         gl.disableVertexAttribArray(0);
         gl.disableVertexAttribArray(1);
         gl.drawArrays(gl.POINTS, 0, PW * PH);
@@ -939,7 +1139,7 @@
       pour: smooth(t, 278, 336),
       center: smooth(t, 252, 318),
       fade: smooth(t, 250, 316),
-      scroll: smooth(t, 304, 342)
+      scroll: smooth(t, 304, 318) * (1 - smooth(t, 322, 332))
     };
   }
 
@@ -1041,11 +1241,11 @@
     gl.uniform1f(U.uCenter, L.center);
     gl.uniform1f(U.uSwell, swell);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
-    if (scales && speed > 0 && L.pour > 0.002) {
-      var spawn = L.pour * L.pour * 0.016;
+    if (scales && speed > 0 && t >= ACT1) {
+      var F = film(t);
       var nstep = coarse ? 2 : 1;
       if (speed > 1) nstep = Math.min(4, Math.ceil(speed / 3));
-      for (var s = 0; s < nstep; s++) scales.step(0.016, spawn, t);
+      for (var s = 0; s < nstep; s++) scales.step(0.016, F.grains, t, F);
     }
     if (scales && L.hero > 0.02) scales.draw(t, L.hero, canvas.width / Math.max(1, canvas.height));
     canvas.style.opacity = L.canvas.toFixed(3);
@@ -1204,8 +1404,12 @@
     var bed = ctx.createBiquadFilter();
     bed.type = "lowpass";
     bed.Q.value = 0.55;
-    bed.frequency.setValueAtTime(260, ctx.currentTime);
-    bed.frequency.linearRampToValueAtTime(1500, ctx.currentTime + stepDur * 280);
+    var eighthVis = (60 / BPM) / 2;
+    var visNow = seconds();
+    var actNow = film(visNow).act;
+    var open = actNow < 2 ? 280 : actNow < 3 ? 720 : actNow < 5 ? 1400 : 480;
+    bed.frequency.setValueAtTime(open, ctx.currentTime);
+    if (actNow < 5) bed.frequency.linearRampToValueAtTime(Math.min(1600, open + 380), ctx.currentTime + 8);
     bed.connect(pre);
     var lfo = ctx.createOscillator();
     var lfoGain = ctx.createGain();
@@ -1249,13 +1453,18 @@
     echoFb.connect(echo);
     echoDamp.connect(pre);
 
-    var beatsNow = seconds() * BPM / 60;
-    var frac = beatsNow - Math.floor(beatsNow);
-    var wait = speed > 0 && frac >= 0.035 ? ((1 - frac) * 60 / BPM) / speed : 0;
+    var into = visNow - MUSIC;
+    var wait = 0;
+    if (into < eighthVis * 2 && speed > 0) {
+      var beatsNow = visNow * BPM / 60;
+      var frac = beatsNow - Math.floor(beatsNow);
+      if (frac >= 0.035) wait = ((1 - frac) * 60 / BPM) / rate;
+    }
     var start = ctx.currentTime + wait;
+    var fadeIn = into < 24 ? Math.max(0.25, (60 / BPM) * 4 / rate) : 0.08;
     pre.gain.setValueAtTime(0.0001, start);
-    pre.gain.exponentialRampToValueAtTime(0.4, start + 0.045);
-    pre.gain.linearRampToValueAtTime(1, start + Math.max(0.2, (60 / BPM) * 4 / rate));
+    pre.gain.exponentialRampToValueAtTime(0.4, start + 0.04);
+    pre.gain.linearRampToValueAtTime(1, start + fadeIn);
 
     var chords = [
       [146.83, 174.61, 220, 261.63],
@@ -1275,64 +1484,79 @@
     var noiseData = noiseBuf.getChannelData(0);
     for (var i = 0; i < noiseLen; i++) noiseData[i] = Math.random() * 2 - 1;
 
+    function playChord(time, chord, gain, dur) {
+      var freqs = chords[chord];
+      for (var k = 0; k < freqs.length; k++) {
+        var osc = ctx.createOscillator();
+        var amp = ctx.createGain();
+        var filt = ctx.createBiquadFilter();
+        osc.type = "triangle";
+        osc.frequency.value = freqs[k];
+        filt.type = "lowpass";
+        filt.frequency.setValueAtTime(900, time);
+        filt.frequency.linearRampToValueAtTime(420, time + dur);
+        amp.gain.setValueAtTime(0.0001, time);
+        amp.gain.exponentialRampToValueAtTime(gain, time + Math.min(dur * 0.25, stepDur * 6));
+        amp.gain.exponentialRampToValueAtTime(0.0001, time + dur);
+        osc.connect(filt);
+        filt.connect(amp);
+        amp.connect(bed);
+        osc.start(time);
+        osc.stop(time + dur + 0.05);
+      }
+    }
+
     function schedule(time, step) {
       if (time < ctx.currentTime) time = ctx.currentTime + 0.005;
-      var chord = Math.floor(step / 32) % 4;
-      if (step % 32 === 0) {
-        var freqs = chords[chord];
-        var dur = stepDur * 38;
-        for (var k = 0; k < freqs.length; k++) {
-          var osc = ctx.createOscillator();
-          var amp = ctx.createGain();
-          var filt = ctx.createBiquadFilter();
-          osc.type = "triangle";
-          osc.frequency.value = freqs[k];
-          filt.type = "lowpass";
-          filt.frequency.setValueAtTime(900, time);
-          filt.frequency.linearRampToValueAtTime(420, time + dur);
-          amp.gain.setValueAtTime(0.0001, time);
-          amp.gain.exponentialRampToValueAtTime(0.04, time + stepDur * 6);
-          amp.gain.exponentialRampToValueAtTime(0.0001, time + dur);
-          osc.connect(filt);
-          filt.connect(amp);
-          amp.connect(bed);
-          osc.start(time);
-          osc.stop(time + dur + 0.05);
-        }
+      var vt = MUSIC + step * eighthVis;
+      var act = film(vt).act;
+      if (act < 1) return;
+      function hit(quant) {
+        return Math.floor((vt - ACT1) / quant) !== Math.floor((vt - eighthVis - ACT1) / quant);
       }
-      if (step % 2 === 0) {
-        var accent = step % 8 === 0 ? 0.2 : 0.11;
-        tone(ctx, pre, time, 128, 0.22, accent, "sine", 46);
+      var chord = Math.floor(Math.max(0, vt - ACT2) / (4 * BAR)) % 4;
+      if (act === 1) {
+        if (hit(BAR)) tone(ctx, pre, time, 196, 2.4, 0.032, "sine");
+        return;
       }
-      if (step >= 16) {
+      if (act === 2 && hit(4 * BAR)) playChord(time, chord, 0.04, stepDur * 42);
+      if (act === 3 && hit(2 * BAR)) playChord(time, chord, 0.055, stepDur * 30);
+      if (act === 4 && hit(BAR)) playChord(time, chord, 0.065, stepDur * 22);
+      if (act === 5 && hit(8 * BAR)) playChord(time, chord, 0.03, stepDur * 70);
+      if (act >= 2 && act < 5 && hit(BAR)) {
+        var accent = act === 2 ? 0.06 : act === 3 ? 0.09 : 0.11;
+        tone(ctx, pre, time, 96, 0.42, accent, "sine", 48);
+      }
+      if (act >= 2 && act < 5 && step % 2 === 0) {
         var note = arps[chord][step % 8];
+        var arpGain = act === 2 ? 0.04 : act === 3 ? 0.055 : 0.07;
         var oscA = ctx.createOscillator();
         var ampA = ctx.createGain();
         var filtA = ctx.createBiquadFilter();
         oscA.type = "triangle";
         oscA.frequency.value = note;
         filtA.type = "lowpass";
-        filtA.frequency.setValueAtTime(2200, time);
-        filtA.frequency.exponentialRampToValueAtTime(380, time + 0.28);
+        filtA.frequency.setValueAtTime(1800, time);
+        filtA.frequency.exponentialRampToValueAtTime(420, time + 0.3);
         ampA.gain.setValueAtTime(0.0001, time);
-        ampA.gain.exponentialRampToValueAtTime(0.07, time + 0.015);
-        ampA.gain.exponentialRampToValueAtTime(0.0001, time + 0.42);
+        ampA.gain.exponentialRampToValueAtTime(arpGain, time + 0.02);
+        ampA.gain.exponentialRampToValueAtTime(0.0001, time + 0.4);
         oscA.connect(filtA);
         filtA.connect(ampA);
         ampA.connect(pre);
         ampA.connect(echoSend);
         oscA.start(time);
-        oscA.stop(time + 0.46);
+        oscA.stop(time + 0.44);
       }
-      if (step >= 48 && step % 2 === 1) {
+      if (act === 4 && step % 4 === 2) {
         var src = ctx.createBufferSource();
         src.buffer = noiseBuf;
         var hat = ctx.createBiquadFilter();
         hat.type = "highpass";
-        hat.frequency.value = 6000;
+        hat.frequency.value = 5000;
         var hatAmp = ctx.createGain();
-        hatAmp.gain.setValueAtTime(0.045, time);
-        hatAmp.gain.exponentialRampToValueAtTime(0.0001, time + 0.045);
+        hatAmp.gain.setValueAtTime(0.018, time);
+        hatAmp.gain.exponentialRampToValueAtTime(0.0001, time + 0.05);
         src.connect(hat);
         hat.connect(hatAmp);
         hatAmp.connect(pre);
@@ -1361,7 +1585,7 @@
     };
 
     nextNote = start;
-    stepIndex = 0;
+    stepIndex = Math.max(0, Math.floor((visNow + wait * rate - MUSIC) / eighthVis));
     scheduler();
 
     audioCtx.onstatechange = function () {
