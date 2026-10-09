@@ -18,9 +18,8 @@
   var speed = readParam("speed", 1, 0, 40);
 
   var BPM = 72;
-  var MUSIC = 188;
-  var LATE = 272;
-  var QUIET_AT = 40;
+  var MUSIC = 252;
+  var QUIET_AT = 50;
 
   var VERT = [
     "#version 300 es",
@@ -35,15 +34,12 @@
     "precision highp float;",
     "uniform vec2 uRes;",
     "uniform float uTime;",
-    "uniform float uPulse;",
-    "uniform float uPhase;",
     "uniform float uSheen;",
     "uniform float uPlasma;",
     "uniform float uStars;",
     "uniform float uNight;",
-    "uniform float uMarch;",
     "uniform float uCenter;",
-    "uniform float uQuality;",
+    "uniform float uSwell;",
     "out vec4 fragColor;",
     "const vec3 PAPER = vec3(0.952941, 0.937255, 0.901961);",
     "const vec3 NIGHT = vec3(0.031373, 0.066667, 0.054902);",
@@ -54,64 +50,14 @@
     "  p3 += dot(p3, p3.yzx + 33.33);",
     "  return fract((p3.x + p3.y) * p3.z);",
     "}",
-    "vec2 rot(vec2 p, float a) {",
-    "  float c = cos(a), s = sin(a);",
-    "  return vec2(c * p.x - s * p.y, s * p.x + c * p.y);",
-    "}",
-    "float sdTorus(vec3 p, vec2 t) {",
-    "  vec2 q = vec2(length(p.xz) - t.x, p.y);",
-    "  return length(q) - t.y;",
-    "}",
-    "vec2 scene(vec3 p) {",
-    "  float dF = p.y + 1.55;",
-    "  vec3 q = p;",
-    "  q.y += 0.42;",
-    "  q.y -= sin(uTime * 0.22) * 0.05;",
-    "  q.xz = rot(q.xz, uTime * 0.11);",
-    "  float dS = length(q) - 0.52;",
-    "  float d1 = sdTorus(q, vec2(0.82, 0.046));",
-    "  vec3 b = q;",
-    "  b.yz = rot(b.yz, 1.02);",
-    "  b.xz = rot(b.xz, uTime * 0.17);",
-    "  float d2 = sdTorus(b, vec2(1.12, 0.034));",
-    "  vec3 c = q;",
-    "  c.xy = rot(c.xy, 0.72 + uTime * 0.13);",
-    "  float d3 = sdTorus(c, vec2(1.42, 0.026));",
-    "  float dR = min(d1, min(d2, d3));",
-    "  float d = dS;",
-    "  float m = 1.0;",
-    "  if (dR < d) { d = dR; m = 2.0; }",
-    "  if (dF < d) { d = dF; m = 3.0; }",
-    "  return vec2(d, m);",
-    "}",
-    "vec3 normalAt(vec3 p) {",
-    "  vec2 e = vec2(0.0016, 0.0);",
-    "  return normalize(vec3(",
-    "    scene(p + e.xyy).x - scene(p - e.xyy).x,",
-    "    scene(p + e.yxy).x - scene(p - e.yxy).x,",
-    "    scene(p + e.yyx).x - scene(p - e.yyx).x",
-    "  ));",
-    "}",
-    "float softShadow(vec3 ro, vec3 rd) {",
-    "  float t = 0.03;",
-    "  float res = 1.0;",
-    "  for (int i = 0; i < 18; i++) {",
-    "    float h = scene(ro + rd * t).x;",
-    "    if (h < 0.002) return 0.28;",
-    "    res = min(res, 10.0 * h / t);",
-    "    t += clamp(h, 0.02, 0.35);",
-    "    if (t > 5.5) break;",
-    "  }",
-    "  return clamp(res, 0.28, 1.0);",
-    "}",
     "vec3 skyOf(vec2 uv) {",
     "  vec2 p = uv * 2.0 - 1.0;",
     "  p.x *= uRes.x / max(uRes.y, 1.0);",
     "  float a = sin(p.x * 0.55 + p.y * 0.2 - uTime * 0.05);",
     "  float b = sin(p.x * 0.28 - p.y * 0.16 + uTime * 0.031 + 1.7);",
     "  vec3 col = PAPER;",
-    "  col = mix(col, vec3(0.99, 0.925, 0.84), clamp(a, 0.0, 1.0) * uSheen * 0.72);",
-    "  col = mix(col, vec3(0.90, 0.93, 0.925), clamp(b, 0.0, 1.0) * uSheen * 0.34);",
+    "  col = mix(col, vec3(0.984, 0.945, 0.90), clamp(a, 0.0, 1.0) * uSheen * 0.42);",
+    "  col = mix(col, vec3(0.945, 0.948, 0.94), clamp(b, 0.0, 1.0) * uSheen * 0.16);",
     "  return col;",
     "}",
     "vec3 aurora(vec2 uv) {",
@@ -132,7 +78,7 @@
     "  float n = hash(id);",
     "  float n2 = hash(id + 19.19);",
     "  float d = length(f - (vec2(n, n2) - 0.5) * 0.62);",
-    "  float tw = 0.55 + 0.45 * sin(uTime * (0.7 + n * 2.2) + n2 * 40.0);",
+    "  float tw = 0.86 + 0.14 * sin(uTime * (0.32 + n * 0.6) + n2 * 20.0);",
     "  float core = 1.0 - smoothstep(0.0, 0.055, d);",
     "  float glow = exp(-d * d * 90.0) * 0.28;",
     "  return (core + glow) * tw * smoothstep(0.8, 0.9, n);",
@@ -144,104 +90,18 @@
     "  c += starLayer(uv + vec2(uTime * 0.0011, -uTime * 0.0022), 8.0) * vec3(1.0, 0.93, 0.78) * 1.25;",
     "  return c;",
     "}",
-    "vec3 shade(vec3 pos, vec3 rd, float mat, vec3 N, float sh) {",
-    "  vec3 L = normalize(vec3(0.48, 0.84, 0.28));",
-    "  vec3 V = -rd;",
-    "  float ndl = clamp(dot(N, L), 0.0, 1.0);",
-    "  float rim = pow(1.0 - clamp(dot(N, V), 0.0, 1.0), 2.3);",
-    "  float spec = pow(clamp(dot(N, normalize(L + V)), 0.0, 1.0), 48.0);",
-    "  vec3 col;",
-    "  float fill = clamp(dot(N, normalize(vec3(-0.35, -0.15, 0.45))), 0.0, 1.0);",
-    "  if (mat < 1.5) {",
-    "    col = vec3(0.04, 0.12, 0.09) + PINE * ndl * sh * 1.25;",
-    "    col += vec3(0.12, 0.22, 0.18) * fill;",
-    "    col += GOLD * rim * 1.2;",
-    "    col += vec3(1.0, 0.96, 0.86) * spec * sh * 0.65;",
-    "    col += GOLD * (0.16 + 0.32 * uPulse);",
-    "  } else if (mat < 2.5) {",
-    "    col = GOLD * (0.26 + rim * 0.7 + ndl * sh * 0.36);",
-    "    col += vec3(0.12, 0.18, 0.14) * fill;",
-    "    col += vec3(1.0, 0.97, 0.9) * spec * sh * 0.5;",
-    "  } else {",
-    "    float rad = length(pos.xz);",
-    "    float engraved = 0.5 + 0.5 * sin(rad * 8.5);",
-    "    float ripple = exp(-18.0 * abs(rad - uPhase * 3.1));",
-    "    float ripple2 = exp(-18.0 * abs(rad - fract(uPhase + 0.5) * 3.1));",
-    "    col = vec3(0.045, 0.075, 0.06);",
-    "    col += vec3(0.07, 0.11, 0.085) * engraved * (1.0 - smoothstep(0.2, 4.2, rad));",
-    "    col += GOLD * (ripple + ripple2 * 0.5) * 0.32;",
-    "    col *= 0.72 + 0.28 * ndl * sh;",
-    "  }",
-    "  return col;",
-    "}",
-    "vec3 traceReflect(vec3 ro, vec3 rd) {",
-    "  float t = 0.02;",
-    "  for (int i = 0; i < 22; i++) {",
-    "    vec3 pos = ro + rd * t;",
-    "    float h = scene(pos).x;",
-    "    if (h < 0.004) {",
-    "      return mix(PINE, GOLD, 0.55 + 0.35 * uPulse);",
-    "    }",
-    "    t += max(h, 0.02);",
-    "    if (t > 6.0) break;",
-    "  }",
-    "  return NIGHT + GOLD * 0.08;",
-    "}",
-    "vec3 march(vec2 uv, vec3 field) {",
-    "  vec2 p = uv * 2.0 - 1.0;",
-    "  p.x *= uRes.x / max(uRes.y, 1.0);",
-    "  float ang = uTime * 0.085;",
-    "  vec3 ro = vec3(0.0, 0.35, 3.25 - 0.35 * uMarch);",
-    "  ro.xz = rot(ro.xz, ang);",
-    "  vec3 ta = vec3(0.0, -0.72, 0.0);",
-    "  vec3 ww = normalize(ta - ro);",
-    "  vec3 uu = normalize(cross(ww, vec3(0.0, 1.0, 0.0)));",
-    "  vec3 vv = cross(uu, ww);",
-    "  vec3 rd = normalize(ww * 1.2 + uu * p.x + vv * p.y);",
-    "  float t = 0.0;",
-    "  float glow = 0.0;",
-    "  float mat = 0.0;",
-    "  vec3 pos = ro;",
-    "  bool hit = false;",
-    "  float budget = uQuality > 0.5 ? 52.0 : 30.0;",
-    "  for (int i = 0; i < 52; i++) {",
-    "    if (float(i) >= budget) break;",
-    "    pos = ro + rd * t;",
-    "    vec2 sd = scene(pos);",
-    "    glow += exp(-sd.x * 5.2) * 0.022;",
-    "    if (sd.x < 0.0025) { hit = true; mat = sd.y; break; }",
-    "    t += max(sd.x * 0.86, 0.004);",
-    "    if (t > 11.0) break;",
-    "  }",
-    "  vec3 col = field;",
-    "  if (hit) {",
-    "    vec3 N = normalAt(pos);",
-    "    float sh = 1.0;",
-    "    if (uQuality > 0.5) sh = softShadow(pos + N * 0.02, normalize(vec3(0.48, 0.84, 0.28)));",
-    "    col = shade(pos, rd, mat, N, sh);",
-    "    if (uQuality > 0.5 && mat > 2.5 && N.y > 0.35) {",
-    "      vec3 rr = reflect(rd, N);",
-    "      if (rr.y > 0.04) {",
-    "        vec3 rc = traceReflect(pos + N * 0.04, rr);",
-    "        float fres = 0.12 + 0.4 * pow(1.0 - clamp(dot(N, -rd), 0.0, 1.0), 2.0);",
-    "        col = mix(col, rc, fres);",
-    "      }",
-    "    }",
-    "    float fog = 1.0 - exp(-t * 0.035);",
-    "    col = mix(col, field, fog * 0.4);",
-    "  }",
-    "  col += (GOLD * 0.85 + vec3(0.08, 0.14, 0.1)) * glow * (0.7 + 0.45 * uPulse);",
-    "  return col;",
-    "}",
     "void main() {",
     "  vec2 uv = gl_FragCoord.xy / uRes;",
     "  vec3 base = skyOf(uv);",
     "  vec3 fx = base;",
     "  fx = mix(fx, NIGHT, uNight * 0.94);",
-    "  if (uPlasma > 0.001) fx = mix(fx, aurora(uv), uPlasma * mix(0.2, 0.5, uNight));",
-    "  if (uStars > 0.001) fx += stars(uv) * uStars * (0.25 + 0.75 * uNight);",
-    "  fx += vec3(0.025, 0.04, 0.032) * (1.0 - smoothstep(0.05, 0.62, uv.y)) * uNight;",
-    "  if (uMarch > 0.001) fx = mix(fx, march(uv, fx), uMarch);",
+    "  if (uPlasma > 0.001) {",
+    "    vec3 aur = aurora(uv);",
+    "    fx = mix(fx, mix(PAPER, aur, 0.22), uPlasma * (1.0 - uNight) * 0.28);",
+    "    fx = mix(fx, aur, uPlasma * uNight * 0.4);",
+    "  }",
+    "  if (uStars > 0.001) fx += stars(uv) * uStars * uNight;",
+    "  fx *= 1.0 + 0.03 * uSwell * uNight;",
     "  float vig = 1.0 - smoothstep(0.28, 1.2, length((uv - vec2(0.5, 0.46)) * vec2(uRes.x / max(uRes.y, 1.0), 1.0)));",
     "  fx *= mix(1.0, 0.8 + 0.2 * vig, uNight);",
     "  float grain = hash(gl_FragCoord.xy + floor(uTime * 4.0));",
@@ -261,7 +121,7 @@
   var gl = canvas.getContext("webgl2", {
     alpha: false,
     antialias: false,
-    depth: false,
+    depth: true,
     stencil: false,
     powerPreference: "high-performance",
     failIfMajorPerformanceCaveat: false
@@ -297,12 +157,11 @@
 
   gl.useProgram(program);
   var U = {};
-  ["uRes", "uTime", "uPulse", "uPhase", "uSheen", "uPlasma", "uStars", "uNight", "uMarch", "uCenter", "uQuality"].forEach(function (name) {
+  ["uRes", "uTime", "uSheen", "uPlasma", "uStars", "uNight", "uCenter", "uSwell"].forEach(function (name) {
     U[name] = gl.getUniformLocation(program, name);
   });
 
   var coarse = window.matchMedia("(pointer: coarse)").matches;
-  var quality = coarse ? 0 : 1;
 
   var ui = document.createElement("div");
   ui.className = "fx-ui";
@@ -339,6 +198,7 @@
   scrollRoot.appendChild(track);
 
   var waveEls = Array.prototype.slice.call(document.querySelectorAll(".mark, h1, .lede, #resources-heading, .things li"));
+  var shell = document.querySelector(".shell");
 
   document.body.appendChild(canvas);
   document.body.appendChild(scrollRoot);
@@ -361,6 +221,8 @@
   var stepIndex = 0;
   var stepDur = 0;
   var lastDraw = 0;
+  var controlsUntil = 0;
+  var promptSound = false;
 
   function seconds() {
     var now = hiddenAt || performance.now();
@@ -376,22 +238,708 @@
     return x * x * (3 - 2 * x);
   }
 
-  function beatPhase(t) {
-    var x = (t * BPM / 60) % 1;
-    return x < 0 ? x + 1 : x;
+  function createScales() {
+    var LIB = [
+      "const float ARM = 0.76;",
+      "const float HANG = 0.50;",
+      "const float PR = 0.30;",
+      "vec3 rotY(vec3 p, float a) {",
+      "  float c = cos(a), s = sin(a);",
+      "  return vec3(c * p.x + s * p.z, p.y, -s * p.x + c * p.z);",
+      "}",
+      "vec3 rotZ(vec3 p, float a) {",
+      "  float c = cos(a), s = sin(a);",
+      "  return vec3(c * p.x - s * p.y, s * p.x + c * p.y, p.z);",
+      "}",
+      "vec3 panPos(float side, float ang) {",
+      "  float c = cos(ang), s = sin(ang);",
+      "  return vec3(side * ARM * c, -side * ARM * s - HANG, 0.0);",
+      "}",
+      "float bowl(vec2 d) {",
+      "  float r = clamp(length(d) / PR, 0.0, 1.0);",
+      "  return mix(-0.062, -0.012, r * r);",
+      "}"
+    ].join("\n");
+
+    function link(vsSrc, fsSrc) {
+      var vs, fs, p;
+      try {
+        vs = compile(gl.VERTEX_SHADER, vsSrc);
+        fs = compile(gl.FRAGMENT_SHADER, fsSrc);
+      } catch (err) {
+        return null;
+      }
+      p = gl.createProgram();
+      gl.attachShader(p, vs);
+      gl.attachShader(p, fs);
+      gl.bindAttribLocation(p, 0, "aPos");
+      gl.bindAttribLocation(p, 1, "aNrm");
+      gl.linkProgram(p);
+      if (!gl.getProgramParameter(p, gl.LINK_STATUS)) return null;
+      return p;
+    }
+
+    function Mesh() { this.p = []; }
+    Mesh.prototype.tri = function (a, b, c, n) {
+      this.p.push(
+        a[0], a[1], a[2], n[0], n[1], n[2],
+        b[0], b[1], b[2], n[0], n[1], n[2],
+        c[0], c[1], c[2], n[0], n[1], n[2]
+      );
+    };
+    Mesh.prototype.box = function (cx, cy, cz, hx, hy, hz) {
+      var faces = [
+        [0, 1, 0, hx, 0, 0, 0, 0, hz, 0, hy, 0],
+        [0, -1, 0, hx, 0, 0, 0, 0, hz, 0, -hy, 0],
+        [1, 0, 0, 0, hy, 0, 0, 0, hz, hx, 0, 0],
+        [-1, 0, 0, 0, hy, 0, 0, 0, hz, -hx, 0, 0],
+        [0, 0, 1, hx, 0, 0, 0, hy, 0, 0, 0, hz],
+        [0, 0, -1, hx, 0, 0, 0, hy, 0, 0, 0, -hz]
+      ];
+      for (var i = 0; i < faces.length; i++) {
+        var f = faces[i];
+        var n = [f[0], f[1], f[2]];
+        var u = [f[3], f[4], f[5]];
+        var v = [f[6], f[7], f[8]];
+        var o = [cx + f[9], cy + f[10], cz + f[11]];
+        var p00 = [o[0] - u[0] - v[0], o[1] - u[1] - v[1], o[2] - u[2] - v[2]];
+        var p10 = [o[0] + u[0] - v[0], o[1] + u[1] - v[1], o[2] + u[2] - v[2]];
+        var p11 = [o[0] + u[0] + v[0], o[1] + u[1] + v[1], o[2] + u[2] + v[2]];
+        var p01 = [o[0] - u[0] + v[0], o[1] - u[1] + v[1], o[2] - u[2] + v[2]];
+        this.tri(p00, p10, p11, n);
+        this.tri(p00, p11, p01, n);
+      }
+    };
+    Mesh.prototype.disk = function (y, r, segs, ny) {
+      for (var i = 0; i < segs; i++) {
+        var a0 = (i / segs) * Math.PI * 2;
+        var a1 = ((i + 1) / segs) * Math.PI * 2;
+        var p0 = [Math.cos(a0) * r, y, Math.sin(a0) * r];
+        var p1 = [Math.cos(a1) * r, y, Math.sin(a1) * r];
+        if (ny > 0) this.tri([0, y, 0], p0, p1, [0, 1, 0]);
+        else this.tri([0, y, 0], p1, p0, [0, -1, 0]);
+      }
+    };
+    Mesh.prototype.rim = function (y0, y1, r, segs) {
+      for (var i = 0; i < segs; i++) {
+        var a0 = (i / segs) * Math.PI * 2;
+        var a1 = ((i + 1) / segs) * Math.PI * 2;
+        var c0 = Math.cos(a0), s0 = Math.sin(a0);
+        var c1 = Math.cos(a1), s1 = Math.sin(a1);
+        var n = [(c0 + c1) * 0.5, 0, (s0 + s1) * 0.5];
+        var b0 = [c0 * r, y0, s0 * r];
+        var b1 = [c1 * r, y0, s1 * r];
+        var t0 = [c0 * r, y1, s0 * r];
+        var t1 = [c1 * r, y1, s1 * r];
+        this.tri(b0, b1, t1, n);
+        this.tri(b0, t1, t0, n);
+      }
+    };
+
+    function upload(mesh) {
+      var buf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.p), gl.STATIC_DRAW);
+      return { buf: buf, n: mesh.p.length / 6 };
+    }
+
+    var segs = coarse ? 16 : 24;
+    var pillar = new Mesh();
+    pillar.box(0, -1.04, 0, 0.30, 0.055, 0.22);
+    pillar.box(0, -0.54, 0, 0.062, 0.46, 0.062);
+    pillar.box(0, -0.015, 0, 0.1, 0.045, 0.08);
+    var beam = new Mesh();
+    beam.box(0, 0, 0, 0.78, 0.026, 0.03);
+    beam.box(-0.76, 0, 0, 0.022, 0.034, 0.034);
+    beam.box(0.76, 0, 0, 0.022, 0.034, 0.034);
+    var pan = new Mesh();
+    pan.disk(-0.062, 0.30, segs, 1);
+    pan.disk(-0.062, 0.30, segs, -1);
+    pan.rim(-0.062, 0.018, 0.30, segs);
+    pan.box(0, 0.25, 0.055, 0.011, 0.25, 0.011);
+    pan.box(0, 0.25, -0.055, 0.011, 0.25, 0.011);
+    var geo = {
+      pillar: upload(pillar),
+      beam: upload(beam),
+      pan: upload(pan)
+    };
+
+    var meshProg = link(
+      [
+        "#version 300 es",
+        "layout(location=0) in vec3 aPos;",
+        "layout(location=1) in vec3 aNrm;",
+        "uniform mat4 uVP;",
+        "uniform sampler2D uAng;",
+        "uniform float uYaw;",
+        "uniform float uPart;",
+        LIB,
+        "out vec3 vN;",
+        "void main() {",
+        "  float ang = texelFetch(uAng, ivec2(0, 0), 0).x;",
+        "  vec3 p = aPos;",
+        "  vec3 n = aNrm;",
+        "  if (uPart > 0.5 && uPart < 1.5) {",
+        "    p = rotZ(p, -ang);",
+        "    n = rotZ(n, -ang);",
+        "  } else if (uPart > 1.5) {",
+        "    float side = uPart > 2.5 ? 1.0 : -1.0;",
+        "    p += panPos(side, ang);",
+        "  }",
+        "  p = rotY(p, uYaw);",
+        "  n = rotY(n, uYaw);",
+        "  vN = n;",
+        "  gl_Position = uVP * vec4(p, 1.0);",
+        "}"
+      ].join("\n"),
+      [
+        "#version 300 es",
+        "precision mediump float;",
+        "in vec3 vN;",
+        "uniform vec3 uColor;",
+        "uniform float uAlpha;",
+        "out vec4 fragColor;",
+        "void main() {",
+        "  vec3 N = normalize(vN);",
+        "  if (!gl_FrontFacing) N = -N;",
+        "  vec3 L = normalize(vec3(0.28, 0.88, 0.38));",
+        "  float ndl = clamp(dot(N, L), 0.0, 1.0);",
+        "  float rim = pow(1.0 - clamp(dot(N, vec3(0.0, 0.12, 0.99)), 0.0, 1.0), 2.0);",
+        "  vec3 col = uColor * (0.4 + 0.78 * ndl) + vec3(1.0, 0.9, 0.7) * rim * 0.3;",
+        "  fragColor = vec4(col, uAlpha);",
+        "}"
+      ].join("\n")
+    );
+    if (!meshProg) return null;
+
+    var meshU = {};
+    ["uVP", "uAng", "uYaw", "uPart", "uColor", "uAlpha"].forEach(function (name) {
+      meshU[name] = gl.getUniformLocation(meshProg, name);
+    });
+
+    function dummyAng() {
+      var t = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 255]));
+      return t;
+    }
+
+    var sand = null;
+    gl.getExtension("EXT_color_buffer_float");
+    gl.getExtension("EXT_color_buffer_half_float");
+
+    function makeTex(w, h, internal, type) {
+      var t = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texImage2D(gl.TEXTURE_2D, 0, internal, w, h, 0, gl.RGBA, type, null);
+      return t;
+    }
+
+    function complete(tex, texB) {
+      var f = gl.createFramebuffer();
+      gl.bindFramebuffer(gl.FRAMEBUFFER, f);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+      if (texB) {
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, texB, 0);
+        gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1]);
+      }
+      var ok = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      if (!ok) gl.deleteFramebuffer(f);
+      return ok ? f : null;
+    }
+
+    var formats = [
+      [gl.RGBA16F, gl.HALF_FLOAT],
+      [gl.RGBA32F, gl.FLOAT]
+    ];
+    var fmt = null;
+    for (var fi = 0; fi < formats.length; fi++) {
+      var trial = makeTex(2, 2, formats[fi][0], formats[fi][1]);
+      var trialF = complete(trial, null);
+      gl.deleteTexture(trial);
+      if (trialF) {
+        gl.deleteFramebuffer(trialF);
+        fmt = formats[fi];
+        break;
+      }
+    }
+
+    var PW = coarse ? 96 : 128;
+    var PH = coarse ? 36 : 48;
+    if (fmt) {
+      var posTex = [makeTex(PW, PH, fmt[0], fmt[1]), makeTex(PW, PH, fmt[0], fmt[1])];
+      var velTex = [makeTex(PW, PH, fmt[0], fmt[1]), makeTex(PW, PH, fmt[0], fmt[1])];
+      var angTex = [makeTex(1, 1, fmt[0], fmt[1]), makeTex(1, 1, fmt[0], fmt[1])];
+      var rowTex = makeTex(PH, 1, fmt[0], fmt[1]);
+      var simFbo = [complete(posTex[0], velTex[0]), complete(posTex[1], velTex[1])];
+      var angFbo = [complete(angTex[0], null), complete(angTex[1], null)];
+      var rowFbo = complete(rowTex, null);
+      var simProg = link(
+        VERT,
+        [
+          "#version 300 es",
+          "precision highp float;",
+          "uniform sampler2D uPos;",
+          "uniform sampler2D uVel;",
+          "uniform sampler2D uAng;",
+          "uniform float uDt;",
+          "uniform float uTime;",
+          "uniform float uSpawn;",
+          "uniform float uBias;",
+          "uniform float uCap;",
+          LIB,
+          "layout(location=0) out vec4 oPos;",
+          "layout(location=1) out vec4 oVel;",
+          "float hash(vec2 p) {",
+          "  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);",
+          "}",
+          "float mound(float mass, vec2 d) {",
+          "  float H = min(0.26, mass * 0.00055);",
+          "  float r = clamp(length(d) / PR, 0.0, 1.0);",
+          "  return H * (1.0 - r * r);",
+          "}",
+          "void main() {",
+          "  ivec2 id = ivec2(gl_FragCoord.xy);",
+          "  vec4 pos = texelFetch(uPos, id, 0);",
+          "  vec4 vel = texelFetch(uVel, id, 0);",
+          "  vec4 stt = texelFetch(uAng, ivec2(0, 0), 0);",
+          "  float ang = stt.x;",
+          "  float massL = stt.z;",
+          "  float massR = stt.w;",
+          "  float dt = clamp(uDt, 0.001, 0.033);",
+          "  if (pos.w < 0.5) {",
+          "    float n = hash(vec2(id) + vec2(uTime * 17.3, floor(uTime * 60.0)));",
+          "    if (uSpawn > 0.0 && n < uSpawn) {",
+          "      float stream = sin(uTime * 0.27) * 0.8 + uBias;",
+          "      float jx = (hash(vec2(id) + 2.3) - 0.5) * 0.1;",
+          "      float jz = (hash(vec2(id) + 5.1) - 0.5) * 0.1;",
+          "      oPos = vec4(stream + jx, 1.12, jz, 1.0);",
+          "      oVel = vec4((hash(vec2(id) + 8.0) - 0.5) * 0.1, -0.06, (hash(vec2(id) + 9.0) - 0.5) * 0.1, 0.0);",
+          "    } else {",
+          "      oPos = vec4(0.0, -4.0, 0.0, 0.0);",
+          "      oVel = vec4(0.0);",
+          "    }",
+          "    return;",
+          "  }",
+          "  if (pos.w < 1.5) {",
+          "    vel.y -= 3.5 * dt;",
+          "    vel.xyz *= exp(-0.22 * dt);",
+          "    pos.xyz += vel.xyz * dt;",
+          "    vel.w += dt;",
+          "    float pr = length(pos.xz);",
+          "    if (pr < 0.07 && pos.y < 0.04 && pos.y > -1.06) {",
+          "      vec2 nrm = pos.xz / max(pr, 0.0001);",
+          "      pos.xz = nrm * 0.078;",
+          "      vel.xz = nrm * 0.3;",
+          "    }",
+          "    vec3 q = rotZ(pos.xyz, ang);",
+          "    if (abs(q.x) < ARM + 0.02 && abs(q.y) < 0.04 && abs(q.z) < 0.042) {",
+          "      q.y = q.y >= 0.0 ? 0.042 : -0.042;",
+          "      pos.xyz = rotZ(q, -ang);",
+          "      vel.y = abs(vel.y) * 0.12;",
+          "    }",
+          "    for (int s = 0; s < 2; s++) {",
+          "      float side = s == 0 ? -1.0 : 1.0;",
+          "      float mass = side < 0.0 ? massL : massR;",
+          "      vec3 c = panPos(side, ang);",
+          "      vec2 d = pos.xz - c.xz;",
+          "      float r = length(d);",
+          "      if (r > PR || pos.y > c.y + 0.12 || pos.y < c.y - 0.34) continue;",
+          "      float top = bowl(d) + mound(mass, d);",
+          "      if (pos.y <= c.y + top + 0.016 && vel.y <= 0.25) {",
+          "        bool spill = mass > uCap || r > PR * 0.9 || (mass > uCap * 0.72 && r > PR * 0.68);",
+          "        if (spill) {",
+          "          vec2 o = d / max(r, 0.0001);",
+          "          pos.xz += o * 0.035;",
+          "          vel.xz += o * 0.9;",
+          "          vel.y = 0.08;",
+          "        } else {",
+          "          float jx = (hash(vec2(id) + 3.7) - 0.5) * 0.02;",
+          "          float jz = (hash(vec2(id) + 6.2) - 0.5) * 0.02;",
+          "          oPos = vec4(d.x + jx, mound(mass, d) + 0.008, d.y + jz, side < 0.0 ? 2.0 : 3.0);",
+          "          oVel = vec4(0.0);",
+          "          return;",
+          "        }",
+          "      }",
+          "    }",
+          "    if (pos.y < -1.4 || vel.w > 9.0) {",
+          "      oPos = vec4(0.0, -4.0, 0.0, 0.0);",
+          "      oVel = vec4(0.0);",
+          "      return;",
+          "    }",
+          "    oPos = vec4(pos.xyz, 1.0);",
+          "    oVel = vel;",
+          "    return;",
+          "  }",
+          "  float side2 = pos.w > 2.5 ? 1.0 : -1.0;",
+          "  float mass2 = side2 > 0.0 ? massR : massL;",
+          "  float r2 = length(pos.xz);",
+          "  float surface = mound(mass2, pos.xz);",
+          "  if (r2 > PR * 0.93 || pos.y > surface + 0.05) {",
+          "    vec3 c2 = panPos(side2, ang);",
+          "    vec2 o2 = pos.xz / max(r2, 0.0001);",
+          "    vec3 world = vec3(c2.x + pos.x, c2.y + bowl(pos.xz) + pos.y, c2.z + pos.z);",
+          "    oPos = vec4(world + vec3(o2.x, 0.02, o2.y) * 0.03, 1.0);",
+          "    oVel = vec4(o2.x * 0.65, 0.04, o2.y * 0.65, 0.0);",
+          "    return;",
+          "  }",
+          "  oPos = pos;",
+          "  oVel = vec4(0.0);",
+          "}"
+        ].join("\n")
+      );
+      var rowProg = link(
+        VERT,
+        [
+          "#version 300 es",
+          "precision highp float;",
+          "uniform sampler2D uPos;",
+          "uniform float uW;",
+          "out vec4 fragColor;",
+          "void main() {",
+          "  int row = int(gl_FragCoord.x);",
+          "  int w = int(uW);",
+          "  float L = 0.0;",
+          "  float R = 0.0;",
+          "  for (int x = 0; x < 128; x++) {",
+          "    if (x >= w) break;",
+          "    float s = texelFetch(uPos, ivec2(x, row), 0).w;",
+          "    if (s > 2.5) R += 1.0;",
+          "    else if (s > 1.5) L += 1.0;",
+          "  }",
+          "  fragColor = vec4(L, R, 0.0, 0.0);",
+          "}"
+        ].join("\n")
+      );
+      var angProg = link(
+        VERT,
+        [
+          "#version 300 es",
+          "precision highp float;",
+          "uniform sampler2D uRow;",
+          "uniform sampler2D uAng;",
+          "uniform float uDt;",
+          "uniform float uRows;",
+          "out vec4 fragColor;",
+          "void main() {",
+          "  int rows = int(uRows);",
+          "  float L = 0.0;",
+          "  float R = 0.0;",
+          "  for (int y = 0; y < 64; y++) {",
+          "    if (y >= rows) break;",
+          "    vec2 c = texelFetch(uRow, ivec2(y, 0), 0).rg;",
+          "    L += c.x;",
+          "    R += c.y;",
+          "  }",
+          "  vec4 prev = texelFetch(uAng, ivec2(0, 0), 0);",
+          "  float target = clamp((R - L) * 0.0016, -0.32, 0.32);",
+          "  float omega = prev.y + ((target - prev.x) * 3.4 - prev.y * 1.45) * uDt;",
+          "  float ang = clamp(prev.x + omega * uDt, -0.36, 0.36);",
+          "  fragColor = vec4(ang, omega, L, R);",
+          "}"
+        ].join("\n")
+      );
+      var ptProg = link(
+        [
+          "#version 300 es",
+          "precision highp float;",
+          "uniform sampler2D uPos;",
+          "uniform sampler2D uAng;",
+          "uniform mat4 uVP;",
+          "uniform float uYaw;",
+          "uniform vec2 uRes;",
+          "uniform vec2 uGrid;",
+          LIB,
+          "out vec3 vCol;",
+          "void main() {",
+          "  int w = int(uGrid.x);",
+          "  ivec2 id = ivec2(gl_VertexID % w, gl_VertexID / w);",
+          "  vec4 p = texelFetch(uPos, id, 0);",
+          "  if (p.w < 0.5) {",
+          "    gl_Position = vec4(3.0, 3.0, 3.0, 1.0);",
+          "    gl_PointSize = 1.0;",
+          "    vCol = vec3(0.0);",
+          "    return;",
+          "  }",
+          "  float ang = texelFetch(uAng, ivec2(0, 0), 0).x;",
+          "  vec3 world;",
+          "  if (p.w < 1.5) world = p.xyz;",
+          "  else {",
+          "    float side = p.w > 2.5 ? 1.0 : -1.0;",
+          "    vec3 c = panPos(side, ang);",
+          "    world = vec3(c.x + p.x, c.y + bowl(p.xz) + p.y, c.z + p.z);",
+          "  }",
+          "  world = rotY(world, uYaw);",
+          "  vec4 clip = uVP * vec4(world, 1.0);",
+          "  gl_Position = clip;",
+          "  gl_PointSize = clamp(uRes.y * 0.03 / max(clip.w, 0.2), 2.2, 11.0);",
+          "  float g = fract(float(id.x * 13 + id.y * 7) * 0.173);",
+          "  vCol = mix(vec3(0.74, 0.58, 0.34), vec3(0.98, 0.88, 0.62), g);",
+          "}"
+        ].join("\n"),
+        [
+          "#version 300 es",
+          "precision mediump float;",
+          "in vec3 vCol;",
+          "uniform float uAlpha;",
+          "out vec4 fragColor;",
+          "void main() {",
+          "  vec2 q = gl_PointCoord * 2.0 - 1.0;",
+          "  float d = dot(q, q);",
+          "  if (d > 1.0) discard;",
+          "  float a = smoothstep(1.0, 0.25, d) * uAlpha;",
+          "  fragColor = vec4(vCol, a);",
+          "}"
+        ].join("\n")
+      );
+      if (simProg && rowProg && angProg && ptProg && simFbo[0] && simFbo[1] && angFbo[0] && angFbo[1] && rowFbo) {
+        var simU = {};
+        ["uPos", "uVel", "uAng", "uDt", "uTime", "uSpawn", "uBias", "uCap"].forEach(function (name) {
+          simU[name] = gl.getUniformLocation(simProg, name);
+        });
+        var rowU = {
+          uPos: gl.getUniformLocation(rowProg, "uPos"),
+          uW: gl.getUniformLocation(rowProg, "uW")
+        };
+        var angU = {
+          uRow: gl.getUniformLocation(angProg, "uRow"),
+          uAng: gl.getUniformLocation(angProg, "uAng"),
+          uDt: gl.getUniformLocation(angProg, "uDt"),
+          uRows: gl.getUniformLocation(angProg, "uRows")
+        };
+        var ptU = {};
+        ["uPos", "uAng", "uVP", "uYaw", "uRes", "uGrid", "uAlpha"].forEach(function (name) {
+          ptU[name] = gl.getUniformLocation(ptProg, name);
+        });
+        gl.useProgram(simProg);
+        gl.uniform1i(simU.uPos, 0);
+        gl.uniform1i(simU.uVel, 1);
+        gl.uniform1i(simU.uAng, 3);
+        gl.useProgram(rowProg);
+        gl.uniform1i(rowU.uPos, 0);
+        gl.uniform1f(rowU.uW, PW);
+        gl.useProgram(angProg);
+        gl.uniform1i(angU.uRow, 2);
+        gl.uniform1i(angU.uAng, 3);
+        gl.uniform1f(angU.uRows, PH);
+        gl.useProgram(ptProg);
+        gl.uniform1i(ptU.uPos, 0);
+        gl.uniform1i(ptU.uAng, 3);
+        gl.uniform2f(ptU.uGrid, PW, PH);
+        function clearF(fbo, w, h, r, g, b, a) {
+          gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+          gl.viewport(0, 0, w, h);
+          gl.disable(gl.BLEND);
+          gl.disable(gl.SCISSOR_TEST);
+          gl.colorMask(true, true, true, true);
+          gl.clearColor(r, g, b, a);
+          gl.clear(gl.COLOR_BUFFER_BIT);
+        }
+        clearF(simFbo[0], PW, PH, 0, -4, 0, 0);
+        clearF(simFbo[1], PW, PH, 0, -4, 0, 0);
+        clearF(angFbo[0], 1, 1, 0, 0, 0, 0);
+        clearF(angFbo[1], 1, 1, 0, 0, 0, 0);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        sand = {
+          cur: 0,
+          aCur: 0,
+          cap: coarse ? 420 : 640,
+          step: function (dt, spawn, time) {
+            var next = 1 - sand.cur;
+            var aNext = 1 - sand.aCur;
+            gl.disable(gl.BLEND);
+            gl.disable(gl.DEPTH_TEST);
+            gl.depthMask(false);
+            gl.colorMask(true, true, true, true);
+            gl.useProgram(simProg);
+            gl.bindFramebuffer(gl.FRAMEBUFFER, simFbo[next]);
+            gl.viewport(0, 0, PW, PH);
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, posTex[sand.cur]);
+            gl.activeTexture(gl.TEXTURE1);
+            gl.bindTexture(gl.TEXTURE_2D, velTex[sand.cur]);
+            gl.activeTexture(gl.TEXTURE3);
+            gl.bindTexture(gl.TEXTURE_2D, angTex[sand.aCur]);
+            gl.uniform1f(simU.uDt, dt);
+            gl.uniform1f(simU.uTime, time);
+            gl.uniform1f(simU.uSpawn, spawn);
+            gl.uniform1f(simU.uBias, Math.sin(time * 0.06) * 0.14);
+            gl.uniform1f(simU.uCap, sand.cap);
+            gl.disableVertexAttribArray(0);
+            gl.disableVertexAttribArray(1);
+            gl.drawArrays(gl.TRIANGLES, 0, 3);
+            sand.cur = next;
+            gl.useProgram(rowProg);
+            gl.bindFramebuffer(gl.FRAMEBUFFER, rowFbo);
+            gl.viewport(0, 0, PH, 1);
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, posTex[sand.cur]);
+            gl.drawArrays(gl.TRIANGLES, 0, 3);
+            gl.useProgram(angProg);
+            gl.bindFramebuffer(gl.FRAMEBUFFER, angFbo[aNext]);
+            gl.viewport(0, 0, 1, 1);
+            gl.activeTexture(gl.TEXTURE2);
+            gl.bindTexture(gl.TEXTURE_2D, rowTex);
+            gl.activeTexture(gl.TEXTURE3);
+            gl.bindTexture(gl.TEXTURE_2D, angTex[sand.aCur]);
+            gl.uniform1f(angU.uDt, dt);
+            gl.drawArrays(gl.TRIANGLES, 0, 3);
+            sand.aCur = aNext;
+          }
+        };
+        sand.pos = function () { return posTex[sand.cur]; };
+        sand.ang = function () { return angTex[sand.aCur]; };
+        sand.ptProg = ptProg;
+        sand.ptU = ptU;
+      }
+    }
+
+    var angFallback = sand ? null : dummyAng();
+    var bronze = [0.72, 0.54, 0.3];
+    var panColor = [0.8, 0.62, 0.36];
+
+    function sub3(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
+    function dot3(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
+    function cross3(a, b) {
+      return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+    }
+    function norm3(a) {
+      var l = Math.hypot(a[0], a[1], a[2]) || 1;
+      return [a[0] / l, a[1] / l, a[2] / l];
+    }
+    function lookAt(eye, target, up) {
+      var z = norm3(sub3(eye, target));
+      var x = norm3(cross3(up, z));
+      var y = cross3(z, x);
+      return new Float32Array([
+        x[0], y[0], z[0], 0,
+        x[1], y[1], z[1], 0,
+        x[2], y[2], z[2], 0,
+        -dot3(x, eye), -dot3(y, eye), -dot3(z, eye), 1
+      ]);
+    }
+    function persp(fovy, aspect, near, far) {
+      var f = 1 / Math.tan(fovy / 2);
+      var nf = 1 / (near - far);
+      var o = new Float32Array(16);
+      o[0] = f / aspect;
+      o[5] = f;
+      o[10] = (far + near) * nf;
+      o[11] = -1;
+      o[14] = 2 * far * near * nf;
+      return o;
+    }
+    function mul4(a, b) {
+      var o = new Float32Array(16);
+      for (var c = 0; c < 4; c++) {
+        for (var r = 0; r < 4; r++) {
+          o[c * 4 + r] =
+            a[r] * b[c * 4] +
+            a[4 + r] * b[c * 4 + 1] +
+            a[8 + r] * b[c * 4 + 2] +
+            a[12 + r] * b[c * 4 + 3];
+        }
+      }
+      return o;
+    }
+    function camera(aspect) {
+      var tall = aspect < 0.92;
+      var fovy = (tall ? 42 : 34) * Math.PI / 180;
+      var dist = tall ? 4.15 : 4.05;
+      var eye = [0.2, tall ? 0.2 : 0.28, dist];
+      var target = [0, -0.02, 0];
+      return mul4(persp(fovy, Math.max(0.2, aspect), 0.06, 40), lookAt(eye, target, [0, 1, 0]));
+    }
+
+    function drawPart(obj, part, color, alpha) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, obj.buf);
+      gl.enableVertexAttribArray(0);
+      gl.enableVertexAttribArray(1);
+      gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 24, 0);
+      gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 24, 12);
+      gl.uniform1f(meshU.uPart, part);
+      gl.uniform3fv(meshU.uColor, color);
+      gl.uniform1f(meshU.uAlpha, alpha);
+      gl.drawArrays(gl.TRIANGLES, 0, obj.n);
+    }
+
+    return {
+      step: function (dt, spawn, time) {
+        if (sand) sand.step(dt, spawn, time);
+      },
+      warm: function (t) {
+        if (!sand) return;
+        var x = (t - 270) / 66;
+        if (x < 0.04) return;
+        if (x > 1) x = 1;
+        var p = x * x * (3 - 2 * x);
+        var spawn = p * p * 0.016;
+        var n = Math.min(210, Math.floor(28 + p * 180));
+        for (var i = 0; i < n; i++) sand.step(0.016, spawn, i * 0.21);
+      },
+      draw: function (time, alpha, aspect) {
+        var yaw = (time - 330) * 0.028 + 0.42;
+        var vp = camera(aspect);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        gl.enable(gl.DEPTH_TEST);
+        gl.depthFunc(gl.LESS);
+        gl.depthMask(true);
+        gl.clear(gl.DEPTH_BUFFER_BIT);
+        gl.enable(gl.BLEND);
+        gl.blendEquation(gl.FUNC_ADD);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        gl.useProgram(meshProg);
+        gl.activeTexture(gl.TEXTURE3);
+        gl.bindTexture(gl.TEXTURE_2D, sand ? sand.ang() : angFallback);
+        gl.uniform1i(meshU.uAng, 3);
+        gl.uniformMatrix4fv(meshU.uVP, false, vp);
+        gl.uniform1f(meshU.uYaw, yaw);
+        drawPart(geo.pillar, 0, bronze, alpha);
+        drawPart(geo.beam, 1, bronze, alpha);
+        drawPart(geo.pan, 2, panColor, alpha);
+        drawPart(geo.pan, 3, panColor, alpha);
+        if (!sand) return;
+        gl.depthMask(false);
+        gl.useProgram(sand.ptProg);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, sand.pos());
+        gl.activeTexture(gl.TEXTURE3);
+        gl.bindTexture(gl.TEXTURE_2D, sand.ang());
+        gl.uniformMatrix4fv(sand.ptU.uVP, false, vp);
+        gl.uniform1f(sand.ptU.uYaw, yaw);
+        gl.uniform1f(sand.ptU.uAlpha, alpha);
+        gl.uniform2f(sand.ptU.uRes, canvas.width, canvas.height);
+        gl.disableVertexAttribArray(0);
+        gl.disableVertexAttribArray(1);
+        gl.drawArrays(gl.POINTS, 0, PW * PH);
+      }
+    };
   }
+
+  var scales = createScales();
 
   function look(t) {
     return {
-      canvas: smooth(t, 10, 36),
-      sheen: smooth(t, 14, 52),
-      plasma: smooth(t, 48, 108),
-      night: smooth(t, 90, 236),
-      stars: smooth(t, 104, 176),
-      march: smooth(t, 136, 228),
-      center: smooth(t, 228, 274),
-      wave: smooth(t, 186, 255),
-      scroll: smooth(t, 232, 268)
+      canvas: smooth(t, 12, 40),
+      sheen: smooth(t, 36, 190),
+      plasma: smooth(t, 175, 245),
+      night: smooth(t, 255, 330),
+      stars: smooth(t, 268, 332),
+      hero: smooth(t, 262, 318),
+      pour: smooth(t, 278, 336),
+      center: smooth(t, 252, 318),
+      fade: smooth(t, 250, 316),
+      scroll: smooth(t, 304, 342)
     };
   }
 
@@ -415,59 +963,93 @@
     gl.viewport(0, 0, canvas.width, canvas.height);
   }
 
-  function applyReadout(t, L, phase, pulse) {
-    var scrimIn = smooth(t, 78, 136);
-    var scrimOut = t < LATE ? 1 : 1 - smooth(t, LATE, LATE + 6);
-    document.body.style.setProperty("--scrim", (scrimIn * scrimOut).toFixed(3));
-    document.body.classList.toggle("fx-late", t >= LATE);
+  function pokeControls() {
+    controlsUntil = performance.now() + 2800;
+  }
+
+  function applyReadout(t, L) {
+    var page = 1 - L.fade;
+    if (shell) {
+      shell.style.opacity = page.toFixed(3);
+      shell.style.pointerEvents = page < 0.08 ? "none" : "";
+    }
+    document.body.style.background = L.fade > 0.92 ? "#08110e" : "";
+    document.body.classList.toggle("fx-dim", L.night > 0.35);
     document.body.classList.toggle("fx-bar", L.scroll > 0.04);
 
-    var amp = L.wave * 8 + smooth(t, 250, 310) * 7;
+    var amp = (1 - page) * page * 18;
     for (var n = 0; n < waveEls.length; n++) {
-      if (amp < 0.35) {
+      if (amp < 0.4) {
         waveEls[n].style.transform = "";
       } else {
-        var y = Math.sin(t * 0.42 + n * 0.62) * amp + Math.sin(phase * Math.PI * 2 + n * 0.8) * amp * 0.22;
+        var y = Math.sin(t * 0.35 + n * 0.7) * amp;
         waveEls[n].style.transform = "translate3d(0," + y.toFixed(2) + "px,0)";
       }
     }
 
-    scrollRoot.style.opacity = L.scroll.toFixed(3);
+    scrollRoot.style.opacity = (L.scroll * L.fade).toFixed(3);
     if (L.scroll > 0.01) {
-      var shift = (t * 38) % loopWidth;
+      var shift = (t * 36) % loopWidth;
       track.style.transform = "translate3d(" + (-shift).toFixed(2) + "px,0,0)";
-      var sAmp = 6 + 9 * L.scroll;
+      var sAmp = 7 + 8 * L.scroll;
       for (var g = 0; g < letters.length; g++) {
         var sy = Math.sin(g * 0.38 + t * 1.15) * sAmp;
         letters[g].style.transform = "translate3d(0," + sy.toFixed(2) + "px,0)";
       }
     }
 
-    if (t >= QUIET_AT) quietBtn.hidden = false;
-    soundBtn.style.setProperty("--pulse", pulse.toFixed(3));
-    if (t >= MUSIC && !musicOn) soundBtn.hidden = false;
-    if (musicOn) soundBtn.hidden = true;
+    var idle = 0.72;
+    if (musicOn) {
+      var left = controlsUntil - performance.now();
+      idle = left > 500 ? 0.72 : left > 0 ? (left / 500) * 0.72 : 0;
+    }
+    if (t >= QUIET_AT) {
+      quietBtn.hidden = false;
+      var qo = musicOn ? idle : 0.34;
+      quietBtn.style.opacity = qo.toFixed(3);
+      quietBtn.style.pointerEvents = qo < 0.04 ? "none" : "auto";
+    }
+    var showPrompt = promptSound && !musicOn && t >= MUSIC;
+    if (showPrompt || musicOn) {
+      soundBtn.hidden = false;
+      var so = showPrompt ? 1 : idle;
+      soundBtn.style.opacity = so.toFixed(3);
+      soundBtn.style.pointerEvents = so < 0.04 ? "none" : "auto";
+    } else {
+      soundBtn.hidden = true;
+    }
     if (t >= MUSIC && activated && !musicOn) maybeStart();
+    var breath = 0.5 + 0.5 * Math.sin(t * 0.55);
+    soundBtn.style.setProperty("--pulse", breath.toFixed(3));
   }
 
   function present(t) {
-    var phase = beatPhase(t);
-    var pulse = Math.exp(-phase * 6.5);
     var L = look(t);
+    var swell = 0.5 + 0.5 * Math.sin(t * 0.28);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.useProgram(program);
+    gl.disable(gl.DEPTH_TEST);
+    gl.disable(gl.BLEND);
+    gl.depthMask(false);
     gl.uniform2f(U.uRes, canvas.width, canvas.height);
     gl.uniform1f(U.uTime, t);
-    gl.uniform1f(U.uPulse, pulse * L.march);
-    gl.uniform1f(U.uPhase, phase);
     gl.uniform1f(U.uSheen, L.sheen);
     gl.uniform1f(U.uPlasma, L.plasma);
     gl.uniform1f(U.uStars, L.stars);
     gl.uniform1f(U.uNight, L.night);
-    gl.uniform1f(U.uMarch, L.march);
     gl.uniform1f(U.uCenter, L.center);
-    gl.uniform1f(U.uQuality, quality);
+    gl.uniform1f(U.uSwell, swell);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+    if (scales && speed > 0 && L.pour > 0.002) {
+      var spawn = L.pour * L.pour * 0.016;
+      var nstep = coarse ? 2 : 1;
+      if (speed > 1) nstep = Math.min(4, Math.ceil(speed / 3));
+      for (var s = 0; s < nstep; s++) scales.step(0.016, spawn, t);
+    }
+    if (scales && L.hero > 0.02) scales.draw(t, L.hero, canvas.width / Math.max(1, canvas.height));
     canvas.style.opacity = L.canvas.toFixed(3);
-    applyReadout(t, L, phase, pulse);
+    applyReadout(t, L);
   }
 
   function teardown() {
@@ -478,6 +1060,7 @@
     reduce.removeEventListener("change", onReduce);
     document.removeEventListener("visibilitychange", onVis);
     document.removeEventListener("pointerdown", onPointer, true);
+    document.removeEventListener("pointermove", onMove);
     document.removeEventListener("keydown", onKey);
     window.removeEventListener("resize", onResize);
     window.removeEventListener("pagehide", onHide);
@@ -487,8 +1070,12 @@
       audioCtx.close();
       audioCtx = null;
     }
-    document.body.classList.remove("fx-on", "fx-late", "fx-bar");
-    document.body.style.removeProperty("--scrim");
+    document.body.classList.remove("fx-on", "fx-dim", "fx-bar");
+    document.body.style.background = "";
+    if (shell) {
+      shell.style.opacity = "";
+      shell.style.pointerEvents = "";
+    }
     for (var n = 0; n < waveEls.length; n++) waveEls[n].style.transform = "";
     if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
     if (scrollRoot.parentNode) scrollRoot.parentNode.removeChild(scrollRoot);
@@ -531,11 +1118,11 @@
   function onShow() { if (!document.hidden) resumeClock(); }
 
   function showSpeaker() {
-    if (!stopped && !musicOn && seconds() >= MUSIC) soundBtn.hidden = false;
+    if (!stopped && !musicOn && seconds() >= MUSIC) promptSound = true;
   }
 
   function hideSpeaker() {
-    soundBtn.hidden = true;
+    promptSound = false;
   }
 
   function maybeStart() {
@@ -578,6 +1165,7 @@
     if (musicOn || !audioCtx || audioCtx.state !== "running") return;
     musicOn = true;
     hideSpeaker();
+    pokeControls();
     var ctx = audioCtx;
     var rate = speed > 0 ? speed : 1;
     stepDur = (60 / BPM) / 2 / rate;
@@ -713,7 +1301,7 @@
         }
       }
       if (step % 2 === 0) {
-        var accent = step % 8 === 0 ? 0.42 : 0.22;
+        var accent = step % 8 === 0 ? 0.2 : 0.11;
         tone(ctx, pre, time, 128, 0.22, accent, "sine", 46);
       }
       if (step >= 16) {
@@ -787,9 +1375,14 @@
 
   function onPointer(e) {
     if (stopped) return;
+    pokeControls();
     if (e.target && e.target.closest && e.target.closest("[data-quiet]")) return;
     activated = true;
     unlock();
+  }
+
+  function onMove() {
+    if (!stopped && musicOn) pokeControls();
   }
 
   function onKey(e) {
@@ -827,6 +1420,9 @@
   reduce.addEventListener("change", onReduce);
   document.addEventListener("visibilitychange", onVis);
   document.addEventListener("pointerdown", onPointer, true);
+  document.addEventListener("pointermove", onMove, { passive: true });
+  quietBtn.addEventListener("focus", pokeControls);
+  soundBtn.addEventListener("focus", pokeControls);
   document.addEventListener("keydown", onKey);
   window.addEventListener("resize", onResize);
   window.addEventListener("pagehide", onHide);
@@ -844,6 +1440,7 @@
   canvas.addEventListener("webglcontextlost", function () { teardown(); });
 
   resize();
+  if (scales) scales.warm(seconds());
   present(seconds());
   if (document.hidden) pauseClock();
   else if (speed > 0) raf = requestAnimationFrame(frame);

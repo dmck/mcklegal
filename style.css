@@ -179,10 +179,10 @@ h2 {
   background: transparent;
   color: var(--muted);
   font: inherit;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   letter-spacing: 0.08em;
-  padding: 0.45rem 0.35rem;
-  opacity: 0.55;
+  padding: 0.4rem 0.3rem;
+  opacity: 0.34;
   cursor: pointer;
 }
 
@@ -193,8 +193,8 @@ h2 {
 
 .fx-sound {
   right: max(0.7rem, env(safe-area-inset-right));
-  width: 2.35rem;
-  height: 2.35rem;
+  width: 2.05rem;
+  height: 2.05rem;
   display: grid;
   place-items: center;
   padding: 0;
@@ -203,8 +203,8 @@ h2 {
   background: rgba(243, 239, 230, 0.9);
   color: var(--ink);
   cursor: pointer;
-  transform: scale(calc(1 + var(--pulse, 0) * 0.1));
-  box-shadow: 0 0 0 calc(var(--pulse, 0) * 7px) rgba(33, 92, 74, 0.22);
+  transform: scale(calc(1 + var(--pulse, 0) * 0.035));
+  box-shadow: 0 0 0 calc(var(--pulse, 0) * 2px) rgba(33, 92, 74, 0.12);
 }
 
 .fx-sound svg {
@@ -274,39 +274,8 @@ body.fx-bar .fx-sound {
   bottom: max(3.35rem, calc(env(safe-area-inset-bottom) + 2.85rem));
 }
 
-body.fx-late {
-  --ink: #f6f1e4;
-  --muted: rgba(246, 241, 228, 0.8);
-  --accent: #f6f1e4;
-  --accent-hover: #ffffff;
-  --focus: #f6f1e4;
-  --line: transparent;
-  background: #08110e;
-  color-scheme: dark;
-}
-
-body.fx-late .shell {
-  text-align: center;
-  text-shadow: 0 1px 16px rgba(0, 0, 0, 0.6);
-}
-
-body.fx-late .mark {
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  font-size: 0.78rem;
-}
-
-body.fx-late h1 {
-  letter-spacing: 0.055em;
-}
-
-body.fx-late .fx-quiet {
-  color: rgba(246, 241, 228, 0.75);
-}
-
-body.fx-late .things,
-body.fx-late .things li {
-  border-color: transparent;
+body.fx-dim .fx-quiet {
+  color: rgba(246, 241, 228, 0.78);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -328,23 +297,8 @@ body.fx-late .things li {
     display: none !important;
   }
 
-  body.fx-on .shell::before {
-    display: none !important;
-  }
-
-  body.fx-late {
-    --ink: #1c1915;
-    --muted: #5c564c;
-    --accent: #215c4a;
-    --accent-hover: #163e32;
-    --line: #d6cfc0;
-    background: #fff !important;
-    color: #1c1915 !important;
-    color-scheme: light !important;
-  }
-
-  body.fx-late .shell {
-    text-align: left !important;
-    text-shadow: none !important;
+  body.fx-on .shell::before,
+  body.fx-on .shell {
+    opacity: 1 !important;
   }
 }
